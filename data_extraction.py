@@ -6,7 +6,7 @@ email: roberto.sanchezcardenas@ucr.ac.cr
 Version: 1.0
 Creation date: 2020.08.25
 Last modification date: 2020.08.27
-help: This is a script for the extraction and sorting of affinity parameters of the docking results from pyMOL, the data must have the
+help: This is a script for the extraction and sorting of affinity parameters of the docking results from pyMOL, the data MUST have the
 following format
 
 mode |   affinity | dist from best mode
@@ -25,13 +25,13 @@ mode |   affinity | dist from best mode
 Usage: 
 """
 import sys
-import yaml
-import csv
+import time
+#import csv
 import glob
 from collections import OrderedDict
 import argparse
 
-def find_neg_num(line): #Se busca un signo negativo en el archivo, se da una posición de inicio en la linea
+def find_neg_num(line): #Searchinng for a negative number
 	for i in range(len(line)-1):
 		if(line[i] == "-"):
 			#print(line[i])
@@ -51,9 +51,9 @@ def numInput():
 
 def extract_data(filename, num_params):
 	f = open(filename, 'r')
-	file_type = f.name.find(".log") #Se busca que el archivo sea .log
+	file_type = f.name.find(".log") #Searching .log files only
 	if(file_type == -1):
-		return #Si no es .log, se termina la función
+		return #If not .log, end def
 		
 	tag = -1 #Se define una etiqueta para llevar conteo
 	a = f.name.find("Amb") #Se busca esta línea para extraer nombre de compuesto
@@ -67,9 +67,11 @@ def extract_data(filename, num_params):
 		if(tag != -1 and tag <= num_params):
 			data.append(find_neg_num(line)) #Se busca el número negativo adelante del numero de posición
 			tag+=1
+	if(tag == -1):
+		print("Error in file %s, data not found" % filename)
 	#print(data)
 	f.close()
-	print(f.name[a:-4], data)
+	#print(f.name[a:-4], data)
 	return f.name[a:-4], data
 		
 def multiples_archivos(path, num_params=0):
@@ -86,33 +88,19 @@ def multiples_archivos(path, num_params=0):
 		try:
 			a, b = extract_data(files[k], num_params)
 			for i in range(len(b)):
+				#compounds[a] = b[i]
 				compounds[a+"_"+str(i)] = b[i]
 		except:
-			pass
-	compounds = {k: v for k, v in sorted(compounds.items(), key=lambda item: item[1])}
-	return OrderedDict(compounds)
+			print("File data from %s couldn't be extracted" %files[k])
+	
+	sorted_compounds = {k: v for k, v in sorted(compounds.items(), key=lambda item: item[1])}
+	return OrderedDict(sorted_compounds)
 
-def multiples_archivos_1(argv, num_params=0):
-	compounds = {} #Se almacenan datos en diccionario
-	if(num_params == 0):
-		num_params = numInput() #Se pide el numero de datos a extraer
-
-	for k in range(1, len(sys.argv)):
-		filename = sys.argv[k]
-		try:
-			a, b = extract_data(filename, num_params)
-			for i in range(len(b)):
-				compounds[a+"_"+str(i)] = b[i]
-		except:
-			pass
-	compounds = {k: v for k, v in sorted(compounds.items(), key=lambda item: item[1])}
-	return OrderedDict(compounds)
-
-def represent_dictionary_order(self, dict_data):
-	return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
-		
-def setup_yaml():
-	yaml.add_representer(OrderedDict, represent_dictionary_order)
+#def represent_dictionary_order(self, dict_data):
+#	return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
+#		
+#def setup_yaml():
+#	yaml.add_representer(OrderedDict, represent_dictionary_order)
 		
 def humanreadable_format(comp_dict, filename, format): #Function to write the dictionary in yaml or csv format
 	while(format == None or format != "yaml" and format != "csv"):
@@ -120,7 +108,7 @@ def humanreadable_format(comp_dict, filename, format): #Function to write the di
 
 	if (filename == None):
 		filename = "compounds"
-	punto = filename.find(".") #Se busca un punto para evitar errores de nombre
+	punto = filename.find(".") #Searching a period in order to avoid format redundancies 
 	
 	if(punto != -1):
 		filename = filename[0:punto]+"."+str(format)
@@ -130,17 +118,31 @@ def humanreadable_format(comp_dict, filename, format): #Function to write the di
 		print("File will be saved under the name: %s" % filename)
 
 	f = open(filename, 'w')
+	items = list(comp_dict.items())
 	if(format == "yaml"):
-		setup_yaml()
-		yaml.dump(comp_dict, f)
+		#print(items)
+		for i in items:
+			#print(i)
+			f.write(i[0][0:len(i[0])-2]+": "+str(i[1])+"\n")
+		#setup_yaml()
+		#yaml.dump(comp_dict, f)
+
 	else:
-		w = csv.writer(f)
-		w.writerow(comp_dict.keys())
-		w.writerow(comp_dict.values())
+		for j in range(len(items)):
+			f.write(items[j][0][0:len(items[j][0])-2])
+			if(j != (len(items)-1)):
+				f.write(",")
+		f.write("\n")
+		for k in range(len(items)):
+			f.write(str(items[k][1]))
+			if(k != (len(items)-1)):
+				f.write(",")
+		
+		#w = csv.writer(f)
+		#print(comp_dict.keys()[])
+		#w.writerow(comp_dict.keys())
+		#w.writerow(comp_dict.values())
 	f.close()
-
-
-
 
 
 def main():
@@ -164,4 +166,6 @@ def main():
 	
 	humanreadable_format(sorted_compounds, args.o, args.f)
 
+start_time = time.time()
 main()
+print("--- %s seconds ---" % (time.time() - start_time))
