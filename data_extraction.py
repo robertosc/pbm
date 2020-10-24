@@ -28,7 +28,7 @@ import sys
 import time
 #import csv
 import glob
-from collections import OrderedDict
+#from collections import OrderedDict
 import argparse
 
 def find_neg_num(line): #Searchinng for a negative number
@@ -94,7 +94,7 @@ def multiples_archivos(path, num_params=0):
 			print("File data from %s couldn't be extracted" %files[k])
 	
 	sorted_compounds = {k: v for k, v in sorted(compounds.items(), key=lambda item: item[1])}
-	return OrderedDict(sorted_compounds)
+	return list(sorted_compounds.items())#OrderedDict(sorted_compounds)
 
 #def represent_dictionary_order(self, dict_data):
 #	return self.represent_mapping('tag:yaml.org,2002:map', dict_data.items())
@@ -102,7 +102,7 @@ def multiples_archivos(path, num_params=0):
 #def setup_yaml():
 #	yaml.add_representer(OrderedDict, represent_dictionary_order)
 		
-def humanreadable_format(comp_dict, filename, format): #Function to write the dictionary in yaml or csv format
+def humanreadable_format(items, filename, format): #Function to write the dictionary in yaml or csv format
 	while(format == None or format != "yaml" and format != "csv"):
 		format = str(input("In what format do you want to save you data? [yaml/csv] "))
 
@@ -118,14 +118,14 @@ def humanreadable_format(comp_dict, filename, format): #Function to write the di
 		print("File will be saved under the name: %s" % filename)
 
 	f = open(filename, 'w')
-	items = list(comp_dict.items())
+	#items = list(items.items())
 	if(format == "yaml"):
 		#print(items)
 		for i in items:
 			#print(i)
 			f.write(i[0][0:len(i[0])-2]+": "+str(i[1])+"\n")
 		#setup_yaml()
-		#yaml.dump(comp_dict, f)
+		#yaml.dump(items, f)
 
 	else:
 		for j in range(len(items)):
@@ -139,9 +139,9 @@ def humanreadable_format(comp_dict, filename, format): #Function to write the di
 				f.write(",")
 		
 		#w = csv.writer(f)
-		#print(comp_dict.keys()[])
-		#w.writerow(comp_dict.keys())
-		#w.writerow(comp_dict.values())
+		#print(items.keys()[])
+		#w.writerow(items.keys())
+		#w.writerow(items.values())
 	f.close()
 
 
